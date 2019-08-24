@@ -1,4 +1,4 @@
-package scalikejdbc.free
+package scalikejdbc.cats.tagless
 
 import org.scalatest.{ BeforeAndAfter, BeforeAndAfterEach, Suite }
 import scalikejdbc._

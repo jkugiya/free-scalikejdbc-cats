@@ -1,9 +1,9 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import cats.InjectK
 import cats.free.Free
 import scalikejdbc._
-import scalikejdbc.free.Query._
+import scalikejdbc.cats.free.Query._
 
 sealed class ScalikeJDBC[F[_]](implicit I: InjectK[Query, F]) {
 

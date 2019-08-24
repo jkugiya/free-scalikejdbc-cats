@@ -1,4 +1,4 @@
-package scalikejdbc.tagless
+package scalikejdbc.cats.tagless
 
 import cats._
 import cats.implicits.{ catsSyntaxEq => _, _ }

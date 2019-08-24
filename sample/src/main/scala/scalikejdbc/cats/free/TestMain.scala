@@ -1,11 +1,11 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import cats._
 import cats.free.Free
 import cats.implicits._
 import scalikejdbc._
+import scalikejdbc.cats.free.Interpreter.TesterBuffer
 import scalikejdbc.config._
-import scalikejdbc.free.Interpreter.TesterBuffer
 
 object TestMain extends App {
 

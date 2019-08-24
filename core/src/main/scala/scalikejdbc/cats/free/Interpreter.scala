@@ -1,4 +1,4 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import java.sql.SQLException
 
@@ -6,8 +6,8 @@ import cats._
 import cats.data._
 import cats.free.Free
 import cats.implicits._
-import scalikejdbc._
-import scalikejdbc.free.Query._
+import scalikejdbc.cats.free.Query._
+import scalikejdbc.{ cats => _, _ }
 
 abstract class Interpreter[M[_]](implicit M: Monad[M]) extends (Query ~> M) {
 

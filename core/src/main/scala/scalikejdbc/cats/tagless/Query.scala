@@ -1,11 +1,11 @@
-package scalikejdbc
-package tagless
+package scalikejdbc.cats.tagless
 
 import java.sql.SQLException
 
 import cats._
 import cats.data._
 import cats.implicits._
+import scalikejdbc.{ DBSession, _ }
 
 sealed abstract class ScalikeJDBC[F[_]: Monad] {
   protected def exec[A](f: DBSession => A): F[A]

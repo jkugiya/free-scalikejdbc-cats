@@ -5,14 +5,14 @@ ScalikeJDBC **Composable** DSL by Free Monad  [![Build Status](https://travis-ci
     import S._
     for {
       id     <- generateKey(insert.into(Programmer).namedValues(pc.name -> name))
-      skills <- list(select.from(Skill as s).where.in(s.id, skillIds))(Skill(s))
-      _      <- skills.traverse[Free[F, ?], Boolean](s => execute(insert.into(ProgrammerSkill).namedValues(sc.programmerId -> id, sc.skillId -> s.id)))
+      skills <- list(select.from(Skill.as(s)).where.in(s.id, skillIds))(Skill(s))
+      _ <- skills.traverse[Free[F, ?], Boolean](s => execute(insert.into(ProgrammerSkill).namedValues(sc.programmerId -> id, sc.skillId -> s.id)))
     } yield Programmer(id, name, skills)
   }
 ```
 
 ```scala
-  val newProgrammer = DB.localTx {
-    Interpreter.transaction.run(createProgrammer("Alice", List(2, 3)))
+  val newProgrammer = DB.localTx { session =>
+    Interpreter.transaction.run(createProgrammer("Alice", List(2, 3))).run(session)
   }
 ```

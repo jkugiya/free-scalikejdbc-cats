@@ -1,10 +1,11 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import entity.Account
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import scalikejdbc._
+import scalikejdbc.cats.free.Interpreter.TxExecutor
 
 import scala.util.Try
 

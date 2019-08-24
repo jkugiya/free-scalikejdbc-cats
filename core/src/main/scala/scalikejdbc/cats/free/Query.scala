@@ -1,4 +1,4 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import scalikejdbc._
 

@@ -1,10 +1,8 @@
-package scalikejdbc.free
+package scalikejdbc.cats.free
 
 import scalikejdbc._
 
-case class Account(id: Int, name: String) {
-
-}
+case class Account(id: Int, name: String) {}
 
 object Account extends SQLSyntaxSupport[Account] {
 
