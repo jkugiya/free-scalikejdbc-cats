@@ -5,7 +5,6 @@ import org.scalacheck.Gen
 import org.scalatest.FunSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import scalikejdbc._
-import scalikejdbc.cats.free.Interpreter.TxExecutor
 
 import scala.util.Try
 
@@ -83,17 +82,17 @@ class InterpreterSpec extends FunSpec with Fixtures {
 
     it("should execute Query") {
       forAll(Gen.alphaStr) { name: String =>
-        val account = DB.localTx(s => Interpreter.transaction.run(create(name)).run(s))
+        val account = DB.localTx(Interpreter.transaction.run(create(name)).apply)
         assert(account.map(_.name) === Some(name))
       }
     }
 
     it("should control transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1        = DB.localTx(s => Interpreter.transaction.run(findAll).run(s))
-        val errorResult = Try(DB.localTx(s => Interpreter.transaction.run(error(name)).run(s)))
+        val all1        = DB.localTx(Interpreter.transaction.run(findAll).apply)
+        val errorResult = Try(DB.localTx(Interpreter.transaction.run(error(name)).apply))
         assert(errorResult.isFailure)
-        val all2 = DB.localTx(s => Interpreter.transaction.run(findAll).run(s))
+        val all2 = DB.localTx(Interpreter.transaction.run(findAll).apply)
         assert(all1.size === all2.size)
       }
     }
@@ -106,7 +105,7 @@ class InterpreterSpec extends FunSpec with Fixtures {
 
     it("should execute Query") {
       forAll(Gen.alphaStr) { name: String =>
-        val account = DB.localTx(s => Interpreter.safeTransaction.run(create(name)).run(s))
+        val account = DB.localTx(Interpreter.safeTransaction.run(create(name)).apply)
         assert(account.isRight)
         assert(account.getOrElse(None).map(_.name) === Some(name))
       }
@@ -114,10 +113,10 @@ class InterpreterSpec extends FunSpec with Fixtures {
 
     it("should control transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1        = DB.localTx(s => Interpreter.safeTransaction.run(findAll).run(s))
-        val errorResult = DB.localTx(s => Interpreter.safeTransaction.run(error(name)).run(s))
+        val all1        = DB.localTx(Interpreter.safeTransaction.run(findAll).apply)
+        val errorResult = DB.localTx(Interpreter.safeTransaction.run(error(name)).apply)
         assert(errorResult.isLeft)
-        val all2 = DB.localTx(s => Interpreter.safeTransaction.run(findAll).run(s))
+        val all2 = DB.localTx(Interpreter.safeTransaction.run(findAll).apply)
         assert(all1.map(_.size) == all2.map(_.size))
       }
     }

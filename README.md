@@ -1,7 +1,7 @@
 ScalikeJDBC **Composable** DSL by Free Monad  [![Build Status](https://travis-ci.org/gakuzzzz/free-scalikejdbc.svg?branch=feature%2Ftest)](https://travis-ci.org/gakuzzzz/free-scalikejdbc)
 
 ```scala
-  def createProgrammer[F[_]](name: Name, skillIds: List[SkillId])(implicit S: ScalikeJDBC[F], M: Applicative[Free[F, ?]]) = {
+  def createProgrammer[F[_]](name: Name, skillIds: List[SkillId])( implicit S: ScalikeJDBC[F], M: Applicative[Free[F, ?]]) = {
     import S._
     for {
       id     <- generateKey(insert.into(Programmer).namedValues(pc.name -> name))
