@@ -2,11 +2,11 @@ package scalikejdbc.free
 
 import java.sql.SQLException
 
+import cats._
+import cats.data._
+import cats.free.Free
+import cats.implicits._
 import scalikejdbc._
-
-import scalaz._
-import scalaz.Id._
-import scalaz.Free
 import scalikejdbc.free.Query._
 
 abstract class Interpreter[M[_]](implicit M: Monad[M]) extends (Query ~> M) {
@@ -33,20 +33,21 @@ object Interpreter {
     protected def exec[A](f: DBSession => A) = f(AutoSession)
   }
 
-  type SQLEither[A] = SQLException \/ A
+  type SQLEither[A] = Either[SQLException, A]
   object SQLEither {
     implicit def TxBoundary[A] = new TxBoundary[SQLEither[A]] {
       def finishTx(result: SQLEither[A], tx: Tx) = {
         result match {
-          case \/-(_) => tx.commit()
-          case -\/(_) => tx.rollback()
+          case Right(_) => tx.commit()
+          case Left(_)  => tx.rollback()
         }
         result
       }
     }
   }
   lazy val safe = new Interpreter[SQLEither] {
-    protected def exec[A](f: DBSession => A) = \/.fromTryCatchThrowable[A, SQLException](f(AutoSession))
+
+    protected def exec[A](f: DBSession => A) = Validated.catchOnly[SQLException](f(AutoSession)).toEither
   }
 
   type TxExecutor[A] = Reader[DBSession, A]
@@ -57,22 +58,24 @@ object Interpreter {
   type SafeExecutor[A] = ReaderT[SQLEither, DBSession, A]
   lazy val safeTransaction = new Interpreter[SafeExecutor] {
     protected def exec[A](f: DBSession => A) = {
-      Kleisli.kleisliU { s: DBSession => \/.fromTryCatchThrowable[A, SQLException](f(s)) }
+      Kleisli { s: DBSession =>
+        Validated.catchOnly[SQLException](f(s)).toEither
+      }
     }
   }
 
-  case class TesterBuffer(input: Seq[Any], output: Seq[(String, Seq[Any])] = Vector())
+  case class TesterBuffer(input: Vector[Any], output: Vector[(String, collection.Seq[Any])] = Vector())
   type Tester[A] = State[TesterBuffer, A]
   lazy val tester = new Interpreter[Tester] {
     protected def exec[A](f: DBSession => A) = ???
 
     override def apply[A](c: Query[A]): Tester[A] = {
-      State[TesterBuffer, A] { case TesterBuffer(head +: tail, output) =>
-        TesterBuffer(tail, output :+ (c.statement -> c.parameters)) -> head.asInstanceOf[A]
+      State[TesterBuffer, A] {
+        case TesterBuffer(head +: tail, output) =>
+          TesterBuffer(tail, output :+ (c.statement -> c.parameters)) -> head.asInstanceOf[A]
       }
     }
 
   }
 
 }
-

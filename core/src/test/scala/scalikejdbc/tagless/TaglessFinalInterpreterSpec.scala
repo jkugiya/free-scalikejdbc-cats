@@ -1,36 +1,36 @@
 package scalikejdbc.tagless
 
+import cats._
+import cats.implicits.{ catsSyntaxEq => _, _ }
 import entity.Account
 import org.scalacheck.Gen
 import org.scalatest.FunSpec
-import org.scalatest.prop.PropertyChecks._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks._
 import scalikejdbc._
 
 import scala.util.Try
-import scalaz._
-import scalaz.syntax.monad._
-import scalaz.\/._
 
 class TaglessFinalInterpreterSpec extends FunSpec with Fixtures {
 
-  private lazy val a = Account.syntax("a")
+  private lazy val a  = Account.syntax("a")
   private lazy val ac = Account.column
 
   def create[F[_]](name: String)(implicit S: ScalikeJDBC[F], F: Monad[F]) = {
     import S._
+    val f = generateKey(insert.into(Account).namedValues(ac.name -> name))
     for {
       id      <- generateKey(insert.into(Account).namedValues(ac.name -> name))
-      account <- single(select.from(Account as a).where.eq(a.id, id))(Account(a))
+      account <- single(select.from(Account.as(a)).where.eq(a.id, id))(Account(a))
     } yield account
   }
 
   def findAll[F[_]](implicit S: ScalikeJDBC[F], F: Monad[F]) = {
     import S._
     for {
-      accounts <- vector(select.from(Account as a).orderBy(a.id))(Account(a))
+      accounts <- vector(select.from(Account.as(a)).orderBy(a.id))(Account(a))
     } yield accounts
   }
-  
+
   def error[F[_]](name: String)(implicit S: ScalikeJDBC[F], F: Monad[F]) = {
     import S._
     for {
@@ -45,13 +45,13 @@ class TaglessFinalInterpreterSpec extends FunSpec with Fixtures {
     it("should execute Query") {
       forAll(Gen.alphaStr) { name: String =>
         val account = create(name)
-        assert(account.map(_.name) === Some(name))
+        assert(account.map(_.name) === Option(name))
       }
     }
 
     it("should separate transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1 = findAll
+        val all1        = findAll
         val errorResult = Try(error(name))
         assert(errorResult.isFailure)
         val all2 = findAll
@@ -73,7 +73,7 @@ class TaglessFinalInterpreterSpec extends FunSpec with Fixtures {
 
     it("should separate transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1 = findAll
+        val all1        = findAll
         val errorResult = error(name)
         assert(errorResult.isLeft)
         val all2 = findAll
@@ -95,7 +95,7 @@ class TaglessFinalInterpreterSpec extends FunSpec with Fixtures {
 
     it("should control transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1 = DB.localTx(findAll.run)
+        val all1        = DB.localTx(findAll.run)
         val errorResult = Try(DB.localTx(error(name).run))
         assert(errorResult.isFailure)
         val all2 = DB.localTx(findAll.run)
@@ -118,7 +118,7 @@ class TaglessFinalInterpreterSpec extends FunSpec with Fixtures {
 
     it("should control transaction") {
       forAll(Gen.alphaStr) { name: String =>
-        val all1 = DB.localTx(findAll.run)
+        val all1        = DB.localTx(findAll.run)
         val errorResult = DB.localTx(error(name).run)
         assert(errorResult.isLeft)
         val all2 = DB.localTx(findAll.run)
